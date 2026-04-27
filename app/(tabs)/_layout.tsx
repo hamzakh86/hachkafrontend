@@ -1,33 +1,59 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
+        tabBarActiveTintColor: '#D4AF37',
+        tabBarInactiveTintColor: '#888',
+        tabBarStyle: {
+          backgroundColor: '#0a0a0a',
+          borderTopColor: '#D4AF37',
+          borderTopWidth: 1,
+        },
+        headerStyle: { backgroundColor: '#0a0a0a' },
+        headerTintColor: '#D4AF37',
+        headerTitleStyle: { fontWeight: 'bold', fontSize: 22 },
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'Hachka',
+          tabBarLabel: 'Accueil',
+          tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Catalogue',
+          tabBarLabel: 'Catalogue',
+          tabBarIcon: ({ color }) => <Ionicons name="grid" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="panier"
+        options={{
+          title: 'Mon Panier',
+          tabBarLabel: 'Panier',
+          tabBarIcon: ({ color }) => <Ionicons name="bag" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profil"
+        options={{
+          title: 'Mon Profil',
+          tabBarLabel: 'Profil',
+          tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="login"
+        options={{
+          title: 'Connexion',
+          tabBarLabel: 'Connexion',
+          tabBarIcon: ({ color }) => <Ionicons name="log-in" size={24} color={color} />,
         }}
       />
     </Tabs>

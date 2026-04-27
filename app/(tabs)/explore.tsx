@@ -1,112 +1,252 @@
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, TextInput, Dimensions } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+import { useState } from 'react';
+import { useApp } from '../../context/AppContext';
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+const { width } = Dimensions.get('window');
 
-export default function TabTwoScreen() {
+const categories = [
+  { id: '1', label: 'Tous', icon: 'grid-large' },
+  { id: '2', label: 'Vestes', icon: 'jacket' },
+  { id: '3', label: 'Robes', icon: 'tshirt-crew' },
+  { id: '4', label: 'Chemises', icon: 'button-pointer' },
+  { id: '5', label: 'Pantalons', icon: 'human-male' },
+  { id: '6', label: 'Accessoires', icon: 'bag-personal' },
+];
+
+const tousLesProduits = [
+  { id: '1', nom: 'Veste Élégante', prix: 189, ancienPrix: 230, categorie: 'Vestes', tailles: ['S', 'M', 'L', 'XL'], note: 4.8, avis: 124, image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400', badge: 'Nouveau' },
+  { id: '2', nom: 'Robe Dorée', prix: 145, ancienPrix: null, categorie: 'Robes', tailles: ['S', 'M', 'L'], note: 4.6, avis: 89, image: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=400', badge: 'Populaire' },
+  { id: '3', nom: 'Sac Premium', prix: 220, ancienPrix: null, categorie: 'Accessoires', tailles: ['Unique'], note: 4.9, avis: 56, image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400', badge: null },
+  { id: '4', nom: 'Chemise Luxe', prix: 95, ancienPrix: 120, categorie: 'Chemises', tailles: ['S', 'M', 'L', 'XL', 'XXL'], note: 4.5, avis: 201, image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400', badge: '-20%' },
+  { id: '5', nom: 'Pantalon Chic', prix: 110, ancienPrix: null, categorie: 'Pantalons', tailles: ['S', 'M', 'L', 'XL'], note: 4.7, avis: 78, image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400', badge: null },
+  { id: '6', nom: 'Écharpe Or', prix: 65, ancienPrix: null, categorie: 'Accessoires', tailles: ['Unique'], note: 4.4, avis: 43, image: 'https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?w=400', badge: 'Nouveau' },
+  { id: '7', nom: 'Manteau Noir', prix: 280, ancienPrix: 350, categorie: 'Vestes', tailles: ['M', 'L', 'XL'], note: 4.9, avis: 167, image: 'https://images.unsplash.com/photo-1539533018257-7bdf5f1b6b46?w=400', badge: '-20%' },
+  { id: '8', nom: 'Robe Noire', prix: 160, ancienPrix: null, categorie: 'Robes', tailles: ['S', 'M', 'L'], note: 4.6, avis: 92, image: 'https://images.unsplash.com/photo-1566479179817-c0b05056a93e?w=400', badge: null },
+];
+
+export default function CatalogueScreen() {
+  const { toggleFavori, estFavori, ajouterAuPanier, nombreArticles } = useApp();
+  const [categorieActive, setCategorieActive] = useState('1');
+  const [recherche, setRecherche] = useState('');
+  const [vue, setVue] = useState<'grille' | 'liste'>('grille');
+  const [tailleSelectionnee, setTailleSelectionnee] = useState<{ [id: string]: string }>({});
+
+  const produitsFiltres = tousLesProduits.filter(p => {
+    const matchCat = categorieActive === '1' || p.categorie === categories.find(c => c.id === categorieActive)?.label;
+    const matchSearch = p.nom.toLowerCase().includes(recherche.toLowerCase());
+    return matchCat && matchSearch;
+  });
+
+  const handleAjouterPanier = (produit: typeof tousLesProduits[0]) => {
+    const taille = tailleSelectionnee[produit.id] || produit.tailles[0];
+    ajouterAuPanier(produit, taille);
+  };
+
+  const renderGrille = (p: typeof tousLesProduits[0], index: number) => (
+    <Animated.View key={p.id} entering={FadeInDown.delay(index * 80)} style={styles.produitCardGrille}>
+      <TouchableOpacity activeOpacity={0.9}>
+        <View style={styles.produitImageContainer}>
+          <Image source={{ uri: p.image }} style={styles.produitImage} contentFit="cover" />
+          <LinearGradient colors={['transparent', 'rgba(0,0,0,0.4)']} style={StyleSheet.absoluteFill} />
+          {p.badge && <View style={styles.badge}><Text style={styles.badgeText}>{p.badge}</Text></View>}
+          <TouchableOpacity style={styles.favoriBtn} onPress={() => toggleFavori(p.id)}>
+            <Ionicons name={estFavori(p.id) ? 'heart' : 'heart-outline'} size={16} color={estFavori(p.id) ? '#D4AF37' : '#fff'} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.produitInfo}>
+          <Text style={styles.produitNom} numberOfLines={1}>{p.nom}</Text>
+          <View style={styles.noteRow}>
+            <Ionicons name="star" size={11} color="#D4AF37" />
+            <Text style={styles.noteText}>{p.note} ({p.avis})</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
+            {p.tailles.map(t => (
+              <TouchableOpacity
+                key={t}
+                style={[styles.tailleChip, tailleSelectionnee[p.id] === t && styles.tailleChipActive]}
+                onPress={() => setTailleSelectionnee(prev => ({ ...prev, [p.id]: t }))}>
+                <Text style={[styles.tailleText, tailleSelectionnee[p.id] === t && styles.tailleTextActive]}>{t}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <View style={styles.prixRow}>
+            <View>
+              <Text style={styles.produitPrix}>{p.prix} DT</Text>
+              {p.ancienPrix && <Text style={styles.ancienPrix}>{p.ancienPrix} DT</Text>}
+            </View>
+            <TouchableOpacity style={styles.addBtn} onPress={() => handleAjouterPanier(p)}>
+              <Ionicons name="bag-add-outline" size={16} color="#0a0a0a" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+
+  const renderListe = (p: typeof tousLesProduits[0], index: number) => (
+    <Animated.View key={p.id} entering={FadeInRight.delay(index * 80)} style={styles.produitCardListe}>
+      <TouchableOpacity activeOpacity={0.9} style={styles.produitListeInner}>
+        <View style={styles.produitListeImageContainer}>
+          <Image source={{ uri: p.image }} style={styles.produitListeImage} contentFit="cover" />
+          {p.badge && <View style={styles.badge}><Text style={styles.badgeText}>{p.badge}</Text></View>}
+        </View>
+        <View style={styles.produitListeInfo}>
+          <Text style={styles.produitNom}>{p.nom}</Text>
+          <Text style={styles.produitCategorie}>{p.categorie}</Text>
+          <View style={styles.noteRow}>
+            <Ionicons name="star" size={11} color="#D4AF37" />
+            <Text style={styles.noteText}>{p.note} ({p.avis} avis)</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
+            {p.tailles.map(t => (
+              <TouchableOpacity
+                key={t}
+                style={[styles.tailleChip, tailleSelectionnee[p.id] === t && styles.tailleChipActive]}
+                onPress={() => setTailleSelectionnee(prev => ({ ...prev, [p.id]: t }))}>
+                <Text style={[styles.tailleText, tailleSelectionnee[p.id] === t && styles.tailleTextActive]}>{t}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <View style={styles.prixRow}>
+            <View>
+              <Text style={styles.produitPrix}>{p.prix} DT</Text>
+              {p.ancienPrix && <Text style={styles.ancienPrix}>{p.ancienPrix} DT</Text>}
+            </View>
+            <View style={styles.listeActions}>
+              <TouchableOpacity onPress={() => toggleFavori(p.id)}>
+                <Ionicons name={estFavori(p.id) ? 'heart' : 'heart-outline'} size={20} color={estFavori(p.id) ? '#D4AF37' : '#666'} />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.addBtn} onPress={() => handleAjouterPanier(p)}>
+                <Ionicons name="bag-add-outline" size={16} color="#0a0a0a" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
+    <View style={styles.container}>
+
+      {/* Recherche */}
+      <Animated.View entering={FadeInDown.delay(100)} style={styles.searchContainer}>
+        <Ionicons name="search-outline" size={18} color="#888" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Rechercher un produit..."
+          placeholderTextColor="#555"
+          value={recherche}
+          onChangeText={setRecherche}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+        {recherche.length > 0 && (
+          <TouchableOpacity onPress={() => setRecherche('')}>
+            <Ionicons name="close-circle" size={18} color="#888" />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity style={styles.filterBtn}>
+          <Ionicons name="options-outline" size={18} color="#D4AF37" />
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* Catégories */}
+      <Animated.View entering={FadeInDown.delay(200)}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
+          {categories.map((cat) => (
+            <TouchableOpacity
+              key={cat.id}
+              style={[styles.categoryChip, categorieActive === cat.id && styles.categoryChipActive]}
+              onPress={() => setCategorieActive(cat.id)}>
+              <MaterialCommunityIcons name={cat.icon as any} size={16} color={categorieActive === cat.id ? '#0a0a0a' : '#888'} />
+              <Text style={[styles.categoryText, categorieActive === cat.id && styles.categoryTextActive]}>
+                {cat.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </Animated.View>
+
+      {/* Barre résultats */}
+      <Animated.View entering={FadeInDown.delay(300)} style={styles.resultatsBar}>
+        <Text style={styles.resultatsText}>{produitsFiltres.length} produits trouvés</Text>
+        <View style={styles.vueToggle}>
+          <TouchableOpacity style={[styles.vueBtn, vue === 'grille' && styles.vueBtnActive]} onPress={() => setVue('grille')}>
+            <Ionicons name="grid-outline" size={18} color={vue === 'grille' ? '#0a0a0a' : '#888'} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.vueBtn, vue === 'liste' && styles.vueBtnActive]} onPress={() => setVue('liste')}>
+            <Ionicons name="list-outline" size={18} color={vue === 'liste' ? '#0a0a0a' : '#888'} />
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+
+      {/* Produits */}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={vue === 'grille' ? styles.grilleContainer : styles.listeContainer}>
+        {vue === 'grille'
+          ? produitsFiltres.map((p, i) => renderGrille(p, i))
+          : produitsFiltres.map((p, i) => renderListe(p, i))
+        }
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
+  container: { flex: 1, backgroundColor: '#0a0a0a' },
+
+  // Recherche
+  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#111', marginHorizontal: 16, marginTop: 16, marginBottom: 12, borderRadius: 14, borderWidth: 1, borderColor: '#222', paddingHorizontal: 14, paddingVertical: 4 },
+  searchIcon: { marginRight: 8 },
+  searchInput: { flex: 1, color: '#fff', paddingVertical: 12, fontSize: 14 },
+  filterBtn: { marginLeft: 8, backgroundColor: '#1a1a1a', padding: 8, borderRadius: 10, borderWidth: 1, borderColor: '#333' },
+
+  // Catégories
+  categoryChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#111', borderWidth: 1, borderColor: '#222', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 25, marginRight: 8, marginBottom: 12 },
+  categoryChipActive: { backgroundColor: '#D4AF37', borderColor: '#D4AF37' },
+  categoryText: { color: '#888', fontSize: 13 },
+  categoryTextActive: { color: '#0a0a0a', fontWeight: 'bold' },
+
+  // Résultats
+  resultatsBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 },
+  resultatsText: { color: '#888', fontSize: 13 },
+  vueToggle: { flexDirection: 'row', backgroundColor: '#111', borderRadius: 10, borderWidth: 1, borderColor: '#222', overflow: 'hidden' },
+  vueBtn: { padding: 8, paddingHorizontal: 12 },
+  vueBtnActive: { backgroundColor: '#D4AF37' },
+
+  // Grille
+  grilleContainer: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, justifyContent: 'space-between' },
+  produitCardGrille: { width: (width - 40) / 2, backgroundColor: '#111', borderRadius: 16, marginHorizontal: 4, marginBottom: 16, borderWidth: 1, borderColor: '#1a1a1a', overflow: 'hidden' },
+  produitImageContainer: { width: '100%', height: 170, position: 'relative' },
+  produitImage: { width: '100%', height: '100%' },
+
+  // Liste
+  listeContainer: { paddingHorizontal: 16 },
+  produitCardListe: { backgroundColor: '#111', borderRadius: 16, marginBottom: 12, borderWidth: 1, borderColor: '#1a1a1a', overflow: 'hidden' },
+  produitListeInner: { flexDirection: 'row' },
+  produitListeImageContainer: { width: 120, height: 150, position: 'relative' },
+  produitListeImage: { width: '100%', height: '100%' },
+  produitListeInfo: { flex: 1, padding: 12 },
+  listeActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+
+  // Commun
+  badge: { position: 'absolute', top: 8, left: 8, backgroundColor: '#D4AF37', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+  badgeText: { color: '#0a0a0a', fontSize: 9, fontWeight: 'bold' },
+  favoriBtn: { position: 'absolute', top: 8, right: 8, width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' },
+  produitInfo: { padding: 10 },
+  produitNom: { color: '#fff', fontSize: 13, fontWeight: 'bold', marginBottom: 4 },
+  produitCategorie: { color: '#888', fontSize: 11, marginBottom: 4 },
+  noteRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
+  noteText: { color: '#888', fontSize: 11 },
+  tailleChip: { borderWidth: 1, borderColor: '#333', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, marginRight: 4 },
+  tailleChipActive: { borderColor: '#D4AF37', backgroundColor: '#D4AF3720' },
+  tailleText: { color: '#666', fontSize: 10 },
+  tailleTextActive: { color: '#D4AF37' },
+  prixRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  produitPrix: { color: '#D4AF37', fontSize: 14, fontWeight: 'bold' },
+  ancienPrix: { color: '#555', fontSize: 11, textDecorationLine: 'line-through' },
+  addBtn: { backgroundColor: '#D4AF37', borderRadius: 20, width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
 });
