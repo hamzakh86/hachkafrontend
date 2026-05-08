@@ -1,11 +1,11 @@
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, TextInput, Dimensions, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
-import Animated, { FadeInDown, SlideInRight } from 'react-native-reanimated';
-import { useState } from 'react';
-import { useApp } from '../../context/AppContext';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { useState } from 'react';
+import { Alert, Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Animated, { FadeInDown, SlideInRight } from 'react-native-reanimated';
+import { useApp } from '../../context/AppContext';
 
 const { width } = Dimensions.get('window');
 const codesPromo = ['HACHKA10', 'MODE20'];

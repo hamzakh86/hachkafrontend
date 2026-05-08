@@ -1,121 +1,196 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import api from '../services/api';
 
 // Types
-export type Produit = {
+export interface Produit {
   id: string;
   nom: string;
   prix: number;
-  image: string;
+  ancienPrix?: number;
   categorie: string;
   tailles: string[];
-  badge?: string | null;
-  note?: number;
-  avis?: number;
-  ancienPrix?: number | null;
-};
+  image: string;
+  badge?: string;
+  note: number;
+  avis: number;
+}
 
-export type ArticlePanier = Produit & {
+export interface ArticlePanier {
+  produit: Produit;
   taille: string;
   quantite: number;
-};
+}
 
-export type Utilisateur = {
+export interface Utilisateur {
+  id: string;
   nom: string;
   email: string;
-  telephone: string;
-} | null;
+  telephone?: string;
+}
 
-type AppContextType = {
-  // Panier
+interface AppContextType {
+  produits: Produit[];
+  loading: boolean;
+  chargerProduits: () => void;
   panier: ArticlePanier[];
-  ajouterAuPanier: (produit: Produit, taille: string) => void;
-  supprimerDuPanier: (id: string, taille: string) => void;
-  incrementerQuantite: (id: string, taille: string) => void;
-  decrementerQuantite: (id: string, taille: string) => void;
-  viderPanier: () => void;
-  totalPanier: number;
-  nombreArticles: number;
-
-  // Favoris
   favoris: string[];
-  toggleFavori: (id: string) => void;
-  estFavori: (id: string) => boolean;
-
-  // Utilisateur
-  utilisateur: Utilisateur;
-  connecter: (nom: string, email: string, telephone?: string) => void;
+  utilisateur: Utilisateur | null;
+  ajouterAuPanier: (produit: Produit, taille: string) => void;
+  supprimerDuPanier: (produitId: string) => void;
+  incrementerQuantite: (produitId: string) => void;
+  decrementerQuantite: (produitId: string) => void;
+  viderPanier: () => void;
+  toggleFavori: (produitId: string) => void;
+  estFavori: (produitId: string) => boolean;
+  connecter: (user: Utilisateur) => void;
   deconnecter: () => void;
   estConnecte: boolean;
-};
+  totalPanier: number;
+  nombreArticles: number;
+}
 
-const AppContext = createContext<AppContextType | null>(null);
+const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const [produits, setProduits] = useState<Produit[]>([]);
+  const [loading, setLoading] = useState(true);
   const [panier, setPanier] = useState<ArticlePanier[]>([]);
   const [favoris, setFavoris] = useState<string[]>([]);
-  const [utilisateur, setUtilisateur] = useState<Utilisateur>(null);
+  const [utilisateur, setUtilisateur] = useState<Utilisateur | null>(null);
 
-  // ── Panier ──
-  const ajouterAuPanier = (produit: Produit, taille: string) => {
-    setPanier(prev => {
-      const existe = prev.find(p => p.id === produit.id && p.taille === taille);
-      if (existe) {
-        return prev.map(p =>
-          p.id === produit.id && p.taille === taille
-            ? { ...p, quantite: p.quantite + 1 }
-            : p
-        );
+  // Charge les produits depuis le backend
+  useEffect(() => {
+    chargerProduits();
+  }, []);
+
+  const chargerProduits = async () => {
+    try {
+      const response = await api.get('/produits');
+      if (response.data.success) {
+        setProduits(response.data.produits.map((p: any) => ({
+          id: p._id,
+          nom: p.nom,
+          prix: p.prix,
+          ancienPrix: p.ancienPrix,
+          categorie: p.categorie,
+          tailles: p.tailles,
+          image: p.image,
+          badge: p.badge,
+          note: p.note || 4.5,
+          avis: p.avis || 0,
+        })));
       }
-      return [...prev, { ...produit, taille, quantite: 1 }];
-    });
+    } catch (error) {
+      console.error('Erreur chargement produits:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const supprimerDuPanier = (id: string, taille: string) => {
-    setPanier(prev => prev.filter(p => !(p.id === id && p.taille === taille)));
+  // Panier
+  const ajouterAuPanier = (produit: Produit, taille: string) => {
+    const existant = panier.find(
+      (item) => item.produit.id === produit.id && item.taille === taille
+    );
+
+    if (existant) {
+      setPanier(
+        panier.map((item) =>
+          item.produit.id === produit.id && item.taille === taille
+            ? { ...item, quantite: item.quantite + 1 }
+            : item
+        )
+      );
+    } else {
+      setPanier([...panier, { produit, taille, quantite: 1 }]);
+    }
   };
 
-  const incrementerQuantite = (id: string, taille: string) => {
-    setPanier(prev => prev.map(p =>
-      p.id === id && p.taille === taille ? { ...p, quantite: p.quantite + 1 } : p
-    ));
+  const supprimerDuPanier = (produitId: string) => {
+    setPanier(panier.filter((item) => item.produit.id !== produitId));
   };
 
-  const decrementerQuantite = (id: string, taille: string) => {
-    setPanier(prev => prev
-      .map(p => p.id === id && p.taille === taille ? { ...p, quantite: p.quantite - 1 } : p)
-      .filter(p => p.quantite > 0)
+  const incrementerQuantite = (produitId: string) => {
+    setPanier(
+      panier.map((item) =>
+        item.produit.id === produitId
+          ? { ...item, quantite: item.quantite + 1 }
+          : item
+      )
     );
   };
 
-  const viderPanier = () => setPanier([]);
-
-  const totalPanier = panier.reduce((acc, p) => acc + p.prix * p.quantite, 0);
-  const nombreArticles = panier.reduce((acc, p) => acc + p.quantite, 0);
-
-  // ── Favoris ──
-  const toggleFavori = (id: string) => {
-    setFavoris(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]);
+  const decrementerQuantite = (produitId: string) => {
+    setPanier(
+      panier.map((item) =>
+        item.produit.id === produitId && item.quantite > 1
+          ? { ...item, quantite: item.quantite - 1 }
+          : item
+      )
+    );
   };
 
-  const estFavori = (id: string) => favoris.includes(id);
-
-  // ── Utilisateur ──
-  const connecter = (nom: string, email: string, telephone?: string) => {
-    setUtilisateur({ nom, email, telephone: telephone || '' });
+  const viderPanier = () => {
+    setPanier([]);
   };
 
-  const deconnecter = () => setUtilisateur(null);
+  // Favoris
+  const toggleFavori = (produitId: string) => {
+    if (favoris.includes(produitId)) {
+      setFavoris(favoris.filter((id) => id !== produitId));
+    } else {
+      setFavoris([...favoris, produitId]);
+    }
+  };
 
-  const estConnecte = utilisateur !== null;
+  const estFavori = (produitId: string) => {
+    return favoris.includes(produitId);
+  };
+
+  // Utilisateur
+  const connecter = (user: Utilisateur) => {
+    setUtilisateur(user);
+  };
+
+  const deconnecter = () => {
+    setUtilisateur(null);
+    setPanier([]);
+    setFavoris([]);
+  };
+
+  const estConnecte = !!utilisateur;
+
+  // Calculs
+  const totalPanier = panier.reduce(
+    (total, item) => total + item.produit.prix * item.quantite,
+    0
+  );
+
+  const nombreArticles = panier.reduce((total, item) => total + item.quantite, 0);
 
   return (
-    <AppContext.Provider value={{
-      panier, ajouterAuPanier, supprimerDuPanier,
-      incrementerQuantite, decrementerQuantite, viderPanier,
-      totalPanier, nombreArticles,
-      favoris, toggleFavori, estFavori,
-      utilisateur, connecter, deconnecter, estConnecte,
-    }}>
+    <AppContext.Provider
+      value={{
+        produits,
+        loading,
+        chargerProduits,
+        panier,
+        favoris,
+        utilisateur,
+        ajouterAuPanier,
+        supprimerDuPanier,
+        incrementerQuantite,
+        decrementerQuantite,
+        viderPanier,
+        toggleFavori,
+        estFavori,
+        connecter,
+        deconnecter,
+        estConnecte,
+        totalPanier,
+        nombreArticles,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );
@@ -123,6 +198,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
 export function useApp() {
   const context = useContext(AppContext);
-  if (!context) throw new Error('useApp doit être utilisé dans AppProvider');
+  if (context === undefined) {
+    throw new Error('useApp must be used within an AppProvider');
+  }
   return context;
 }

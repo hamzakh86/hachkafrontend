@@ -1,11 +1,10 @@
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Switch, Dimensions, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Image } from 'expo-image';
-import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
-import { useState } from 'react';
-import { useApp } from '../../context/AppContext';
 import { router } from 'expo-router';
+import { useState } from 'react';
+import { Alert, Dimensions, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useApp } from '../../context/AppContext';
 
 const { width } = Dimensions.get('window');
 

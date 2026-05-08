@@ -1,52 +1,41 @@
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, TextInput, Dimensions } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Image } from 'expo-image';
-import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
+import { Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useApp } from '../../context/AppContext';
 
 const { width } = Dimensions.get('window');
 
 const categories = [
   { id: '1', label: 'Tous', icon: 'grid-large' },
-  { id: '2', label: 'Vestes', icon: 'jacket' },
+  { id: '2', label: 'Vestes', icon: 'coat-rack' },
   { id: '3', label: 'Robes', icon: 'tshirt-crew' },
   { id: '4', label: 'Chemises', icon: 'button-pointer' },
   { id: '5', label: 'Pantalons', icon: 'human-male' },
   { id: '6', label: 'Accessoires', icon: 'bag-personal' },
 ];
 
-const tousLesProduits = [
-  { id: '1', nom: 'Veste Élégante', prix: 189, ancienPrix: 230, categorie: 'Vestes', tailles: ['S', 'M', 'L', 'XL'], note: 4.8, avis: 124, image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400', badge: 'Nouveau' },
-  { id: '2', nom: 'Robe Dorée', prix: 145, ancienPrix: null, categorie: 'Robes', tailles: ['S', 'M', 'L'], note: 4.6, avis: 89, image: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=400', badge: 'Populaire' },
-  { id: '3', nom: 'Sac Premium', prix: 220, ancienPrix: null, categorie: 'Accessoires', tailles: ['Unique'], note: 4.9, avis: 56, image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400', badge: null },
-  { id: '4', nom: 'Chemise Luxe', prix: 95, ancienPrix: 120, categorie: 'Chemises', tailles: ['S', 'M', 'L', 'XL', 'XXL'], note: 4.5, avis: 201, image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400', badge: '-20%' },
-  { id: '5', nom: 'Pantalon Chic', prix: 110, ancienPrix: null, categorie: 'Pantalons', tailles: ['S', 'M', 'L', 'XL'], note: 4.7, avis: 78, image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400', badge: null },
-  { id: '6', nom: 'Écharpe Or', prix: 65, ancienPrix: null, categorie: 'Accessoires', tailles: ['Unique'], note: 4.4, avis: 43, image: 'https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?w=400', badge: 'Nouveau' },
-  { id: '7', nom: 'Manteau Noir', prix: 280, ancienPrix: 350, categorie: 'Vestes', tailles: ['M', 'L', 'XL'], note: 4.9, avis: 167, image: 'https://images.unsplash.com/photo-1539533018257-7bdf5f1b6b46?w=400', badge: '-20%' },
-  { id: '8', nom: 'Robe Noire', prix: 160, ancienPrix: null, categorie: 'Robes', tailles: ['S', 'M', 'L'], note: 4.6, avis: 92, image: 'https://images.unsplash.com/photo-1566479179817-c0b05056a93e?w=400', badge: null },
-];
-
 export default function CatalogueScreen() {
-  const { toggleFavori, estFavori, ajouterAuPanier, nombreArticles } = useApp();
+  const { produits, loading, toggleFavori, estFavori, ajouterAuPanier, nombreArticles } = useApp();
   const [categorieActive, setCategorieActive] = useState('1');
   const [recherche, setRecherche] = useState('');
   const [vue, setVue] = useState<'grille' | 'liste'>('grille');
   const [tailleSelectionnee, setTailleSelectionnee] = useState<{ [id: string]: string }>({});
 
-  const produitsFiltres = tousLesProduits.filter(p => {
+  const produitsFiltres = produits.filter(p => {
     const matchCat = categorieActive === '1' || p.categorie === categories.find(c => c.id === categorieActive)?.label;
     const matchSearch = p.nom.toLowerCase().includes(recherche.toLowerCase());
     return matchCat && matchSearch;
   });
 
-  const handleAjouterPanier = (produit: typeof tousLesProduits[0]) => {
+  const handleAjouterPanier = (produit: any) => {
     const taille = tailleSelectionnee[produit.id] || produit.tailles[0];
     ajouterAuPanier(produit, taille);
   };
 
-  const renderGrille = (p: typeof tousLesProduits[0], index: number) => (
+  const renderGrille = (p: any, index: number) => (
     <Animated.View key={p.id} entering={FadeInDown.delay(index * 80)} style={styles.produitCardGrille}>
       <TouchableOpacity activeOpacity={0.9}>
         <View style={styles.produitImageContainer}>
@@ -64,7 +53,7 @@ export default function CatalogueScreen() {
             <Text style={styles.noteText}>{p.note} ({p.avis})</Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
-            {p.tailles.map(t => (
+            {p.tailles.map((t: string) => (
               <TouchableOpacity
                 key={t}
                 style={[styles.tailleChip, tailleSelectionnee[p.id] === t && styles.tailleChipActive]}
@@ -87,7 +76,7 @@ export default function CatalogueScreen() {
     </Animated.View>
   );
 
-  const renderListe = (p: typeof tousLesProduits[0], index: number) => (
+  const renderListe = (p: any, index: number) => (
     <Animated.View key={p.id} entering={FadeInRight.delay(index * 80)} style={styles.produitCardListe}>
       <TouchableOpacity activeOpacity={0.9} style={styles.produitListeInner}>
         <View style={styles.produitListeImageContainer}>
@@ -102,7 +91,7 @@ export default function CatalogueScreen() {
             <Text style={styles.noteText}>{p.note} ({p.avis} avis)</Text>
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
-            {p.tailles.map(t => (
+            {p.tailles.map((t: string) => (
               <TouchableOpacity
                 key={t}
                 style={[styles.tailleChip, tailleSelectionnee[p.id] === t && styles.tailleChipActive]}
@@ -129,6 +118,14 @@ export default function CatalogueScreen() {
       </TouchableOpacity>
     </Animated.View>
   );
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <Text style={{ color: '#fff' }}>Chargement des produits...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -185,10 +182,18 @@ export default function CatalogueScreen() {
 
       {/* Produits */}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={vue === 'grille' ? styles.grilleContainer : styles.listeContainer}>
-        {vue === 'grille'
-          ? produitsFiltres.map((p, i) => renderGrille(p, i))
-          : produitsFiltres.map((p, i) => renderListe(p, i))
-        }
+        {produitsFiltres.length === 0 ? (
+          <View style={{ padding: 40, alignItems: 'center' }}>
+            <Text style={{ color: '#888', fontSize: 14 }}>Aucun produit trouvé</Text>
+          </View>
+        ) : (
+          <>
+            {vue === 'grille'
+              ? produitsFiltres.map((p, i) => renderGrille(p, i))
+              : produitsFiltres.map((p, i) => renderListe(p, i))
+            }
+          </>
+        )}
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>
