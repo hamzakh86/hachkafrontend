@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../HachkaDashboard"
+		},
+		{
+			"path": "../../HachkaBackend"
+		}
+	],
+	"settings": {}
+}

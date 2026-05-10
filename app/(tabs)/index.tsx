@@ -3,36 +3,16 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Dimensions, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useApp } from '../../context/AppContext';
 
 const { width } = Dimensions.get('window');
 
-const categories = [
-  { id: '1', label: 'Tous', icon: 'grid-large' },
-  { id: '2', label: 'Vestes', icon: 'jacket' },
-  { id: '3', label: 'Robes', icon: 'tshirt-crew' },
-  { id: '4', label: 'Chemises', icon: 'button-pointer' },
-  { id: '5', label: 'Accessoires', icon: 'bag-personal' },
-];
 
-export const produits = [
-  { id: '1', nom: 'Veste Élégante', prix: 189, ancienPrix: 230, categorie: 'Vestes', tailles: ['S', 'M', 'L', 'XL'], note: 4.8, avis: 124, image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400', badge: 'Nouveau' },
-  { id: '2', nom: 'Robe Dorée', prix: 145, ancienPrix: null, categorie: 'Robes', tailles: ['S', 'M', 'L'], note: 4.6, avis: 89, image: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=400', badge: 'Populaire' },
-  { id: '3', nom: 'Sac Premium', prix: 220, ancienPrix: null, categorie: 'Accessoires', tailles: ['Unique'], note: 4.9, avis: 56, image: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400', badge: null },
-  { id: '4', nom: 'Chemise Luxe', prix: 95, ancienPrix: 120, categorie: 'Chemises', tailles: ['S', 'M', 'L', 'XL', 'XXL'], note: 4.5, avis: 201, image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400', badge: '-20%' },
-  { id: '5', nom: 'Pantalon Chic', prix: 110, ancienPrix: null, categorie: 'Pantalons', tailles: ['S', 'M', 'L', 'XL'], note: 4.7, avis: 78, image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400', badge: null },
-  { id: '6', nom: 'Écharpe Or', prix: 65, ancienPrix: null, categorie: 'Accessoires', tailles: ['Unique'], note: 4.4, avis: 43, image: 'https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?w=400', badge: 'Nouveau' },
-];
-
-const bannieres = [
-  { id: '1', titre: 'Nouvelle Collection', sous: 'Printemps 2026', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800' },
-  { id: '2', titre: 'Soldes -30%', sous: 'Offres limitées', image: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=800' },
-];
 
 export default function HomeScreen() {
-  const { toggleFavori, estFavori, ajouterAuPanier, nombreArticles, utilisateur, estConnecte } = useApp();
+  const { produits, categories, bannieres, toggleFavori, estFavori, ajouterAuPanier, nombreArticles, utilisateur, estConnecte } = useApp();
   const [categorieActive, setCategorieActive] = useState('1');
   const [tailleSelectionnee, setTailleSelectionnee] = useState<{ [id: string]: string }>({});
 
@@ -40,9 +20,14 @@ export default function HomeScreen() {
     ? produits
     : produits.filter(p => p.categorie === categories.find(c => c.id === categorieActive)?.label);
 
-  const handleAjouterPanier = (produit: typeof produits[0]) => {
-    const taille = tailleSelectionnee[produit.id] || produit.tailles[0];
+  const handleAjouterPanier = (produit: any) => {
+    if (produit.tailles && produit.tailles.length > 0 && !tailleSelectionnee[produit.id]) {
+      Alert.alert('Attention', 'Veuillez sélectionner une taille avant d\'ajouter au panier');
+      return;
+    }
+    const taille = tailleSelectionnee[produit.id] || (produit.tailles && produit.tailles[0]) || 'Unique';
     ajouterAuPanier(produit, taille);
+    Alert.alert('Succès', 'Produit ajouté au panier');
   };
 
   return (

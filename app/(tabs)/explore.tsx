@@ -2,23 +2,16 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeInDown, FadeInRight } from 'react-native-reanimated';
 import { useApp } from '../../context/AppContext';
 
 const { width } = Dimensions.get('window');
 
-const categories = [
-  { id: '1', label: 'Tous', icon: 'grid-large' },
-  { id: '2', label: 'Vestes', icon: 'coat-rack' },
-  { id: '3', label: 'Robes', icon: 'tshirt-crew' },
-  { id: '4', label: 'Chemises', icon: 'button-pointer' },
-  { id: '5', label: 'Pantalons', icon: 'human-male' },
-  { id: '6', label: 'Accessoires', icon: 'bag-personal' },
-];
+
 
 export default function CatalogueScreen() {
-  const { produits, loading, toggleFavori, estFavori, ajouterAuPanier, nombreArticles } = useApp();
+  const { produits, categories, loading, toggleFavori, estFavori, ajouterAuPanier, nombreArticles } = useApp();
   const [categorieActive, setCategorieActive] = useState('1');
   const [recherche, setRecherche] = useState('');
   const [vue, setVue] = useState<'grille' | 'liste'>('grille');
@@ -31,7 +24,11 @@ export default function CatalogueScreen() {
   });
 
   const handleAjouterPanier = (produit: any) => {
-    const taille = tailleSelectionnee[produit.id] || produit.tailles[0];
+    if (produit.tailles && produit.tailles.length > 0 && !tailleSelectionnee[produit.id]) {
+      Alert.alert('Attention', 'Veuillez sélectionner une taille avant d\'ajouter au panier');
+      return;
+    }
+    const taille = tailleSelectionnee[produit.id] || (produit.tailles && produit.tailles[0]) || 'Unique';
     ajouterAuPanier(produit, taille);
   };
 

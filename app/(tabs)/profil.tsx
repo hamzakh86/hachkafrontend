@@ -29,7 +29,7 @@ const menuSections = [
 ];
 
 export default function ProfilScreen() {
-  const { utilisateur, estConnecte, deconnecter, favoris, panier, nombreArticles } = useApp();
+  const { utilisateur, estConnecte, deconnecter, favoris, panier, nombreArticles, commandes } = useApp();
   const [notifications, setNotifications] = useState(true);
   const [newsletter, setNewsletter] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
@@ -105,7 +105,7 @@ export default function ProfilScreen() {
       {/* Stats */}
       <Animated.View entering={FadeInDown.delay(200)} style={styles.statsContainer}>
         <View style={styles.statCard}>
-          <Text style={styles.statNombre}>3</Text>
+          <Text style={styles.statNombre}>{commandes.length}</Text>
           <Text style={styles.statLabel}>Commandes</Text>
         </View>
         <View style={styles.statDivider} />
@@ -139,7 +139,7 @@ export default function ProfilScreen() {
                   if (item.label === 'Mes favoris') {
                     Alert.alert('Favoris', `Vous avez ${favoris.length} produit(s) en favoris`);
                   } else if (item.label === 'Mes commandes') {
-                    Alert.alert('Commandes', 'Vous avez 3 commandes passées');
+                    router.push('/commandes');
                   } else {
                     Alert.alert(item.label, 'Fonctionnalité bientôt disponible !');
                   }

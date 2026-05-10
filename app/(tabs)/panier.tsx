@@ -11,7 +11,7 @@ const { width } = Dimensions.get('window');
 const codesPromo = ['HACHKA10', 'MODE20'];
 
 export default function PanierScreen() {
-  const { panier, supprimerDuPanier, incrementerQuantite, decrementerQuantite, viderPanier, totalPanier, nombreArticles, estConnecte } = useApp();
+  const { panier, supprimerDuPanier, incrementerQuantite, decrementerQuantite, viderPanier, totalPanier, nombreArticles, estConnecte, passerCommande } = useApp();
   const [promo, setPromo] = useState('');
   const [promoApplique, setPromoApplique] = useState(false);
   const [promoErreur, setPromoErreur] = useState(false);
@@ -29,7 +29,7 @@ export default function PanierScreen() {
     }
   };
 
-  const handleCommander = () => {
+  const handleCommander = async () => {
     if (!estConnecte) {
       Alert.alert(
         'Connexion requise',
@@ -41,11 +41,26 @@ export default function PanierScreen() {
       );
       return;
     }
-    Alert.alert(
-      'Commande confirmée ! 🎉',
-      `Votre commande de ${total} DT a été passée avec succès !`,
-      [{ text: 'Super !', onPress: () => viderPanier() }]
-    );
+
+    // Simulation d'adresse par défaut
+    const adresse = {
+      rue: 'Avenue Habib Bourguiba',
+      ville: 'Tunis',
+      codePostal: '1000',
+      pays: 'Tunisie',
+    };
+
+    const success = await passerCommande(adresse, promoApplique ? promo : undefined);
+
+    if (success) {
+      Alert.alert(
+        'Commande confirmée ! 🎉',
+        `Votre commande de ${total} DT a été passée avec succès !`,
+        [{ text: 'Super !', onPress: () => router.push('/commandes') }]
+      );
+    } else {
+      Alert.alert('Erreur', 'Une erreur est survenue lors de la commande.');
+    }
   };
 
   if (panier.length === 0) {
@@ -108,12 +123,12 @@ export default function PanierScreen() {
 
         {/* Articles */}
         {panier.map((p, index) => (
-          <Animated.View key={`${p.id}-${p.taille}`} entering={SlideInRight.delay(index * 100)} style={styles.item}>
-            <Image source={{ uri: p.image }} style={styles.itemImage} contentFit="cover" />
+          <Animated.View key={`${p.produit.id}-${p.taille}`} entering={SlideInRight.delay(index * 100)} style={styles.item}>
+            <Image source={{ uri: p.produit.image }} style={styles.itemImage} contentFit="cover" />
             <View style={styles.itemInfo}>
               <View style={styles.itemHeader}>
-                <Text style={styles.itemNom} numberOfLines={1}>{p.nom}</Text>
-                <TouchableOpacity onPress={() => supprimerDuPanier(p.id, p.taille)}>
+                <Text style={styles.itemNom} numberOfLines={1}>{p.produit.nom}</Text>
+                <TouchableOpacity onPress={() => supprimerDuPanier(p.produit.id, p.taille)}>
                   <Ionicons name="close-circle" size={22} color="#444" />
                 </TouchableOpacity>
               </View>
@@ -121,13 +136,13 @@ export default function PanierScreen() {
                 <Text style={styles.tailleText}>Taille : {p.taille}</Text>
               </View>
               <View style={styles.itemFooter}>
-                <Text style={styles.itemPrix}>{p.prix * p.quantite} DT</Text>
+                <Text style={styles.itemPrix}>{p.produit.prix * p.quantite} DT</Text>
                 <View style={styles.quantiteRow}>
-                  <TouchableOpacity onPress={() => decrementerQuantite(p.id, p.taille)} style={styles.qtyBtn}>
+                  <TouchableOpacity onPress={() => decrementerQuantite(p.produit.id, p.taille)} style={styles.qtyBtn}>
                     <Ionicons name="remove" size={14} color="#D4AF37" />
                   </TouchableOpacity>
                   <Text style={styles.quantite}>{p.quantite}</Text>
-                  <TouchableOpacity onPress={() => incrementerQuantite(p.id, p.taille)} style={styles.qtyBtn}>
+                  <TouchableOpacity onPress={() => incrementerQuantite(p.produit.id, p.taille)} style={styles.qtyBtn}>
                     <Ionicons name="add" size={14} color="#D4AF37" />
                   </TouchableOpacity>
                 </View>

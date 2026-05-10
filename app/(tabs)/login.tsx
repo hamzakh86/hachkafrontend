@@ -6,6 +6,8 @@ import { useState } from 'react';
 import { Alert, Dimensions, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useApp } from '../../context/AppContext';
+import api from '../../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -26,28 +28,54 @@ export default function LoginScreen() {
 
   const validerEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (mode === 'inscription') {
       if (!nom.trim()) return Alert.alert('Erreur', 'Veuillez entrer votre nom');
       if (!validerEmail(email)) return Alert.alert('Erreur', 'Email invalide');
       if (motDePasse.length < 6) return Alert.alert('Erreur', 'Le mot de passe doit contenir au moins 6 caractères');
+      
       setLoading(true);
-      setTimeout(() => {
-        connecter(nom, email, telephone);
+      try {
+        const response = await api.post('auth/register', { nom, email, motDePasse, telephone });
+        if (response.data.success) {
+          await AsyncStorage.setItem('token', response.data.token);
+          connecter({
+            id: response.data.user._id,
+            nom: response.data.user.nom,
+            email: response.data.user.email,
+            telephone: response.data.user.telephone,
+          });
+          Alert.alert('Bienvenue ! 🎉', `Compte créé avec succès pour ${nom}`);
+          router.push('/(tabs)');
+        }
+      } catch (error: any) {
+        Alert.alert('Erreur', error.response?.data?.message || 'Erreur lors de l\'inscription');
+      } finally {
         setLoading(false);
-        Alert.alert('Bienvenue ! 🎉', `Compte créé avec succès pour ${nom}`);
-        router.push('/(tabs)');
-      }, 1000);
+      }
     } else {
       if (!validerEmail(email)) return Alert.alert('Erreur', 'Email invalide');
       if (!motDePasse) return Alert.alert('Erreur', 'Veuillez entrer votre mot de passe');
+      
       setLoading(true);
-      setTimeout(() => {
-        connecter(email.split('@')[0], email);
+      try {
+        const response = await api.post('auth/login', { email, motDePasse });
+        if (response.data.success) {
+          await AsyncStorage.setItem('token', response.data.token);
+          connecter({
+            id: response.data.user._id,
+            nom: response.data.user.nom,
+            email: response.data.user.email,
+            telephone: response.data.user.telephone,
+          });
+          Alert.alert('Connexion réussie ! 👋', `Bon retour sur Hachka !`);
+          router.push('/(tabs)');
+        }
+      } catch (error: any) {
+        Alert.alert('Erreur', error.response?.data?.message || 'Email ou mot de passe incorrect');
+      } finally {
         setLoading(false);
-        Alert.alert('Connexion réussie ! 👋', `Bon retour sur Hachka !`);
-        router.push('/(tabs)');
-      }, 1000);
+      }
     }
   };
 
